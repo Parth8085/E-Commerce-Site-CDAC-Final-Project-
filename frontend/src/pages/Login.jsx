@@ -37,7 +37,7 @@ const Login = () => {
     };
 
     return (
-        <div style={{ maxWidth: '400px', margin: '2rem auto', padding: '2rem', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}>
+        <div style={{ width: '100%', maxWidth: '400px', margin: '2rem auto', padding: '2rem', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}>
             <h2 style={{ marginBottom: '1.5rem', textAlign: 'center' }}>Login</h2>
             {error && <p style={{ color: 'red', marginBottom: '1rem', textAlign: 'center' }}>{error}</p>}
 

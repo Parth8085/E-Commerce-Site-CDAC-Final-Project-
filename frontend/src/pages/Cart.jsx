@@ -98,23 +98,26 @@ const Cart = () => {
             </div>
 
             <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'flex-end' }}>
-                <div style={{ background: 'white', padding: '1.5rem', borderRadius: 'var(--radius)', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', minWidth: '300px' }}>
+                <div style={{ background: 'white', padding: '1.5rem', borderRadius: 'var(--radius)', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', width: '100%', maxWidth: '400px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', fontSize: '1.2rem', fontWeight: 'bold' }}>
                         <span>Total:</span>
                         <span>₹{cart.totalAmount}</span>
                     </div>
-                    <button style={{
-                        width: '100%',
-                        background: 'var(--primary)',
-                        color: 'white',
-                        border: 'none',
-                        padding: '1rem',
-                        borderRadius: 'var(--radius)',
-                        fontSize: '1rem',
-                        fontWeight: 'bold',
-                        cursor: 'pointer'
-                    }}>
-                        Checkout
+                    <button
+                        onClick={() => navigate('/checkout')}
+                        style={{
+                            width: '100%',
+                            background: 'var(--primary)',
+                            color: 'white',
+                            border: 'none',
+                            padding: '1rem',
+                            borderRadius: 'var(--radius)',
+                            fontSize: '1rem',
+                            fontWeight: 'bold',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        Proceed to Checkout
                     </button>
                 </div>
             </div>

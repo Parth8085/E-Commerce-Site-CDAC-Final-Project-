@@ -76,10 +76,15 @@ export const CartProvider = ({ children }) => {
         }
     };
 
+    const clearCart = () => {
+        setCart(null);
+        // The backend clears cart on successful checkout, so we just reset local state
+    };
+
     const itemsCount = cart?.items?.reduce((total, item) => total + item.quantity, 0) || 0;
 
     return (
-        <CartContext.Provider value={{ cart, addToCart, removeFromCart, updateQuantity, itemsCount }}>
+        <CartContext.Provider value={{ cart, addToCart, removeFromCart, updateQuantity, clearCart, itemsCount }}>
             {children}
         </CartContext.Provider>
     );

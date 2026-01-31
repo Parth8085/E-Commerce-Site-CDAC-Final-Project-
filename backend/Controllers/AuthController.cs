@@ -141,6 +141,7 @@ namespace Backend.Controllers
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Name, user.Name),
+                new Claim(ClaimTypes.Email, user.Email),
                 new Claim(ClaimTypes.Role, user.Role?.Name ?? "User")
             };
 
@@ -176,19 +177,19 @@ namespace Backend.Controllers
 
     public class VerifyOtpDto 
     {
-        public string PhoneNumber { get; set; }
-        public string Otp { get; set; }
+        public string PhoneNumber { get; set; } = string.Empty;
+        public string Otp { get; set; } = string.Empty;
     }
 
     public class ForgotPasswordDto
     {
-        public string Email { get; set; }
+        public string Email { get; set; } = string.Empty;
     }
 
     public class ResetPasswordDto
     {
-        public string Email { get; set; }
-        public string Otp { get; set; }
-        public string NewPassword { get; set; }
+        public string Email { get; set; } = string.Empty;
+        public string Otp { get; set; } = string.Empty;
+        public string NewPassword { get; set; } = string.Empty;
     }
 }

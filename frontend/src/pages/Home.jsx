@@ -5,6 +5,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import WelcomeAnimation from '../components/WelcomeAnimation';
 import { useCart } from '../context/CartContext';
+import { Heart } from 'lucide-react';
 
 const Home = () => {
     const [products, setProducts] = useState([]);
@@ -14,6 +15,7 @@ const Home = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const [showWelcome, setShowWelcome] = useState(false);
+    const [wishlistItems, setWishlistItems] = useState(new Set());
 
     useEffect(() => {
         if (location.state?.showWelcome) {
@@ -26,6 +28,24 @@ const Home = () => {
     const { addToCart } = useCart();
 
     const handleAddToCart = async (product) => {
+        // Check for visual out of stock first
+        if (product.stock <= 0) {
+            const email = prompt('This product is out of stock. Enter your email to get notified when it\'s back in stock:');
+            if (email) {
+                try {
+                    await api.post('/stocknotification/request', {
+                        email: email,
+                        productId: product.id
+                    });
+                    alert('Thank you! We will notify you when this product is back in stock.');
+                } catch (notifError) {
+                    console.error('Failed to register notification:', notifError);
+                    alert(notifError.response?.data?.message || 'Failed to register for notification');
+                }
+            }
+            return;
+        }
+
         if (!isAuthenticated) {
             alert("Please login to add to cart");
             navigate('/login');
@@ -36,7 +56,68 @@ const Home = () => {
             alert("Added " + product.name + " to cart!");
         } catch (error) {
             console.error(error);
-            alert("Failed to add to cart");
+
+            // Check if it's an out-of-stock error from backend
+            if (error.response?.data?.outOfStock) {
+                const email = prompt('This product is out of stock. Enter your email to get notified when it\'s back in stock:');
+                if (email) {
+                    try {
+                        await api.post('/stocknotification/request', {
+                            email: email,
+                            productId: product.id
+                        });
+                        alert('Thank you! We will notify you when this product is back in stock.');
+                    } catch (notifError) {
+                        console.error('Failed to register notification:', notifError);
+                        alert(notifError.response?.data?.message || 'Failed to register for notification');
+                    }
+                }
+            } else {
+                alert(error.response?.data?.message || "Failed to add to cart");
+            }
+        }
+    };
+
+    // Fetch wishlist items
+    const fetchWishlist = async () => {
+        if (!isAuthenticated) return;
+        try {
+            const response = await api.get('/wishlist');
+            const wishlistProductIds = new Set(response.data.items.map(item => item.productId));
+            setWishlistItems(wishlistProductIds);
+        } catch (error) {
+            console.error('Failed to fetch wishlist:', error);
+        }
+    };
+
+    // Toggle wishlist
+    const handleToggleWishlist = async (productId, e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (!isAuthenticated) {
+            alert("Please login to add to wishlist");
+            navigate('/login');
+            return;
+        }
+
+        const isInWishlist = wishlistItems.has(productId);
+
+        try {
+            if (isInWishlist) {
+                await api.delete(`/wishlist/remove/${productId}`);
+                setWishlistItems(prev => {
+                    const newSet = new Set(prev);
+                    newSet.delete(productId);
+                    return newSet;
+                });
+            } else {
+                await api.post(`/wishlist/add/${productId}`);
+                setWishlistItems(prev => new Set([...prev, productId]));
+            }
+        } catch (error) {
+            console.error('Failed to update wishlist:', error);
+            alert(error.response?.data || 'Failed to update wishlist');
         }
     };
 
@@ -54,7 +135,8 @@ const Home = () => {
         };
 
         fetchProducts();
-    }, []);
+        fetchWishlist();
+    }, [isAuthenticated]);
 
     const isInCompare = (id) => compareList.some(p => p.id === id);
 
@@ -149,16 +231,47 @@ const Home = () => {
                                 position: 'absolute',
                                 top: '12px',
                                 left: '12px',
-                                background: 'rgba(255, 255, 255, 0.9)',
+                                background: product.stock <= 0 ? 'rgba(239, 68, 68, 0.9)' : 'rgba(255, 255, 255, 0.9)',
                                 backdropFilter: 'blur(4px)',
-                                color: 'var(--text)',
+                                color: product.stock <= 0 ? 'white' : 'var(--text)',
                                 padding: '4px 10px',
                                 borderRadius: '20px',
                                 fontSize: '0.75rem',
                                 fontWeight: 600,
                                 boxShadow: 'var(--shadow-sm)'
-                            }}>{product.brand}</span>
+                            }}>
+                                {product.stock <= 0 ? 'Out of Stock' : product.brand}
+                            </span>
 
+                            {/* Wishlist Heart Button */}
+                            <button
+                                onClick={(e) => handleToggleWishlist(product.id, e)}
+                                style={{
+                                    position: 'absolute',
+                                    top: '12px',
+                                    right: '56px',
+                                    background: wishlistItems.has(product.id) ? '#F43F5E' : 'white',
+                                    color: wishlistItems.has(product.id) ? 'white' : '#F43F5E',
+                                    border: 'none',
+                                    borderRadius: '50%',
+                                    width: '36px',
+                                    height: '36px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    cursor: 'pointer',
+                                    boxShadow: 'var(--shadow)',
+                                    transition: 'all 0.2s'
+                                }}
+                                title={wishlistItems.has(product.id) ? "Remove from Wishlist" : "Add to Wishlist"}
+                            >
+                                <Heart
+                                    size={18}
+                                    fill={wishlistItems.has(product.id) ? 'white' : 'none'}
+                                />
+                            </button>
+
+                            {/* Compare Button */}
                             <button
                                 onClick={(e) => { e.preventDefault(); isInCompare(product.id) ? removeFromCompare(product.id) : addToCompare(product); }}
                                 style={{
@@ -210,9 +323,14 @@ const Home = () => {
                                 <button
                                     className="btn-primary"
                                     onClick={() => handleAddToCart(product)}
-                                    style={{ padding: '0.6rem 1.2rem', fontSize: '0.9rem' }}
+                                    style={{
+                                        padding: '0.6rem 1.2rem',
+                                        fontSize: '0.9rem',
+                                        background: product.stock <= 0 ? 'var(--secondary)' : 'var(--gradient-primary)',
+                                        opacity: product.stock <= 0 ? 0.9 : 1
+                                    }}
                                 >
-                                    Add to Cart
+                                    {product.stock <= 0 ? 'Notify Me' : 'Add to Cart'}
                                 </button>
                             </div>
                         </div>

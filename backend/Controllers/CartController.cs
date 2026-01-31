@@ -51,6 +51,15 @@ namespace Backend.Controllers
             var userId = GetUserId();
             if (userId == 0) return Unauthorized();
 
+            var product = await _context.Products.FindAsync(request.ProductId);
+            if (product == null) return NotFound("Product not found");
+
+            // Check stock availability
+            if (product.Stock <= 0)
+            {
+                return BadRequest(new { message = "Product is out of stock", outOfStock = true });
+            }
+
             var cart = await _context.Carts
                 .Include(c => c.Items)
                 .FirstOrDefaultAsync(c => c.UserId == userId);
@@ -61,22 +70,44 @@ namespace Backend.Controllers
                 _context.Carts.Add(cart);
             }
 
-            var product = await _context.Products.FindAsync(request.ProductId);
-            if (product == null) return NotFound("Product not found");
-
             var existingItem = cart.Items.FirstOrDefault(i => i.ProductId == request.ProductId);
             if (existingItem != null)
             {
+                // Check if adding more would exceed stock
+                if (existingItem.Quantity + request.Quantity > product.Stock)
+                {
+                    return BadRequest(new { message = "Not enough stock available", outOfStock = true });
+                }
                 existingItem.Quantity += request.Quantity;
             }
             else
             {
+                // Check if requested quantity exceeds stock
+                if (request.Quantity > product.Stock)
+                {
+                    return BadRequest(new { message = "Not enough stock available", outOfStock = true });
+                }
+                
                 cart.Items.Add(new CartItem
                 {
                     ProductId = request.ProductId,
                     Quantity = request.Quantity,
                     Price = product.Price // Snapshot price
                 });
+            }
+
+            // Remove from wishlist if present
+            var wishlist = await _context.Wishlists
+                .Include(w => w.Items)
+                .FirstOrDefaultAsync(w => w.UserId == userId);
+
+            if (wishlist != null)
+            {
+                var wishlistItem = wishlist.Items.FirstOrDefault(i => i.ProductId == request.ProductId);
+                if (wishlistItem != null)
+                {
+                    _context.WishlistItems.Remove(wishlistItem);
+                }
             }
 
             await _context.SaveChangesAsync();

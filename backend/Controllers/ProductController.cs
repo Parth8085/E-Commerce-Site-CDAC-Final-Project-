@@ -17,7 +17,7 @@ namespace Backend.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<ProductDto>>> GetProducts([FromQuery] string? category)
+        public async Task<ActionResult<IEnumerable<ProductDto>>> GetProducts([FromQuery] string? category, [FromQuery] string? search)
         {
             var query = _context.Products
                 .Include(p => p.Category)
@@ -29,6 +29,17 @@ namespace Backend.Controllers
             if (!string.IsNullOrEmpty(category))
             {
                 query = query.Where(p => p.Category!.Name == category);
+            }
+
+            if (!string.IsNullOrEmpty(search))
+            {
+                var searchLower = search.ToLower();
+                query = query.Where(p => 
+                    p.Name.ToLower().Contains(searchLower) ||
+                    p.Description.ToLower().Contains(searchLower) ||
+                    p.Brand!.Name.ToLower().Contains(searchLower) ||
+                    p.Category!.Name.ToLower().Contains(searchLower)
+                );
             }
 
             var products = await query.ToListAsync();
