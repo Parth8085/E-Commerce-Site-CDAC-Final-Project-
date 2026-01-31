@@ -25,6 +25,7 @@ namespace Backend.Data
         public DbSet<OrderItem> OrderItems { get; set; }
         public DbSet<Payment> Payments { get; set; }
         public DbSet<Review> Reviews { get; set; }
+        public DbSet<StockNotification> StockNotifications { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -34,6 +35,21 @@ namespace Backend.Data
             modelBuilder.Entity<Role>().HasData(
                 new Role { Id = 1, Name = "Admin" },
                 new Role { Id = 2, Name = "User" }
+            );
+
+            // Seed Admin User
+            // Password: Admin@123
+            modelBuilder.Entity<User>().HasData(
+                new User
+                {
+                    Id = 1,
+                    Name = "Admin User",
+                    Email = "admin@smartkartstore.com",
+                    PhoneNumber = "1234567890",
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin@123"),
+                    RoleId = 1,
+                    IsPhoneVerified = true
+                }
             );
 
             // Seed Categories

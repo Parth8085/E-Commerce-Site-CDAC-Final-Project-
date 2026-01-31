@@ -103,18 +103,21 @@ const Cart = () => {
                         <span>Total:</span>
                         <span>₹{cart.totalAmount}</span>
                     </div>
-                    <button style={{
-                        width: '100%',
-                        background: 'var(--primary)',
-                        color: 'white',
-                        border: 'none',
-                        padding: '1rem',
-                        borderRadius: 'var(--radius)',
-                        fontSize: '1rem',
-                        fontWeight: 'bold',
-                        cursor: 'pointer'
-                    }}>
-                        Checkout
+                    <button
+                        onClick={() => navigate('/checkout')}
+                        style={{
+                            width: '100%',
+                            background: 'var(--primary)',
+                            color: 'white',
+                            border: 'none',
+                            padding: '1rem',
+                            borderRadius: 'var(--radius)',
+                            fontSize: '1rem',
+                            fontWeight: 'bold',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        Proceed to Checkout
                     </button>
                 </div>
             </div>

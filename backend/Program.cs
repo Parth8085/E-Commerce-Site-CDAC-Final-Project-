@@ -11,7 +11,11 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers().AddJsonOptions(x =>
-   x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
+{
+   x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+   x.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+});
+builder.Services.AddHttpClient();
 
 // Database Context (MySQL)
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -78,7 +82,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection();
 
 app.UseCors("AllowReactApp");
 
@@ -86,5 +90,37 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Ensure admin user exists
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    var adminUser = await context.Users.FirstOrDefaultAsync(u => u.Email == "admin@smartkartstore.com");
+    
+    if (adminUser == null)
+    {
+        var admin = new Backend.Models.User
+        {
+            Name = "Admin User",
+            Email = "admin@smartkartstore.com",
+            PhoneNumber = "1234567890",
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin@123"),
+            RoleId = 1,
+            IsPhoneVerified = true
+        };
+        
+        context.Users.Add(admin);
+        await context.SaveChangesAsync();
+        Console.WriteLine("✅ Admin user created: admin@smartkartstore.com / Admin@123");
+    }
+    else
+    {
+        // Update password to ensure it's correct
+        adminUser.PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin@123");
+        adminUser.RoleId = 1;
+        await context.SaveChangesAsync();
+        Console.WriteLine("✅ Admin user verified: admin@smartkartstore.com / Admin@123");
+    }
+}
 
 app.Run();
