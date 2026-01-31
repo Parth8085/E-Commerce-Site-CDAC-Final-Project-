@@ -1,0 +1,2 @@
+G:\ECommerceFrontEnd\ecommercefrontend.client\obj\Debug\ecommercefrontend.client.esproj.CoreCompileInputs.cache
+G:\EcommerceAPI\ecommercefrontend.client\obj\Debug\ecommercefrontend.client.esproj.CoreCompileInputs.cache
